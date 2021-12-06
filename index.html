@@ -13,15 +13,14 @@
 <body>
 	<div id="puzzlebg"></div>
 	<div id="stuff" class="ui">
-		<label>Image link: </label><label for="imageLinkInput"></label><!--
-		--><input type="text" id="imageLinkInput" name="imageLinkInput" value="https://i.ibb.co/TbrCvsy/image.png">
+		<input type="file" id="linkInput">
 		<label>Difficulty: </label><label for="diffSelect"></label><!--
 		--><select id="diffSelect"></select>
 	</div>
 	<div id="buttons" class="ui">
-		<input class="button" type="button" value="Shuffle" onclick="shuffle()"/><!--
-		--><input class="button" type="button" id="loadImageButton" value="Load image" onclick="loadImage()"/><!--
-		--><input class="button" type="button" id="generateButton" value="Generate puzzles" onclick="generatePuzzles()"/>
+		<input class="button" type="button" value="Shuffle" onclick="puzzleEngine.shuffle()"/><!--
+		--><input class="button" type="button" id="loadImageButton" value="Load image" onclick="puzzleEngine.loadImage()"/><!--
+		--><input class="button" type="button" id="generateButton" value="Generate puzzles" onclick="puzzleEngine.generatePuzzles()"/>
 	</div>
 	<div id="stats" class="ui">
 		<label>Time: </label><span id="timer">0</span>
