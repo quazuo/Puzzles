@@ -1,79 +1,75 @@
 "use strict";
 
-const soundsEngine = (function() {
-    const hitSound = new Audio('sounds/hitsound.wav');
-	const goodSound = new Audio('sounds/goodsound.wav');
-	const oofSound = new Audio('sounds/oofsound.wav');
+const soundsEngine = (function () {
+    const sounds = {
+        hit: {element: new Audio('sounds/hitsound.wav')},
+        good: {element: new Audio('sounds/goodsound.wav')},
+        retard: {element: new Audio('sounds/oofsound.wav')},
+    };
 
-    const hitSounds = [];
-    const goodSounds = [];
-    const oofSounds = [];
-
-	let soundCounter = 0;
+    const VOLUME = 0.1;
+    let soundCounter = 0;
 
     return {
-		initSounds() {
-			if (hitSounds.length)
-				return;
+        init() {
+            for (let sound of Object.values(sounds)) {
+                if (sound.arr) continue;
 
-			for (let i = 0; i < 10; i++) {
-				hitSounds.push(hitSound.cloneNode());
-				goodSounds.push(goodSound.cloneNode());
-				oofSounds.push(oofSound.cloneNode());
-			}
-		},
+                sound.arr = [];
 
-		playHitSound() {
-			soundCounter++;
-			if (soundCounter === 10)
-				soundCounter = 0;
-			hitSounds[soundCounter].play();
-		},
+                for (let i = 0; i < 10; i++) {
+                    sound.arr.push(sound.element.cloneNode());
+                    sound.arr[i].volume = VOLUME;
+                }
+            }
+        },
 
-		playGoodSound() {
-			soundCounter++;
-			if (soundCounter === 10)
-				soundCounter = 0;
-			goodSounds[soundCounter].play();
-		},
-		playOofSound() {
-			soundCounter++;
-			if (soundCounter === 10)
-				soundCounter = 0;
-			oofSounds[soundCounter].play();
-		}
-	}
+        play(name) {
+            if (!sounds[name]) return;
+
+            sounds[name].arr[soundCounter].play();
+
+            soundCounter++;
+            if (soundCounter === 10)
+                soundCounter = 0;
+        },
+
+        playDouble() {
+            setTimeout(() => this.play("good"), 100);
+            this.play("good");
+        }
+    };
 })();
 
-const statsEngine = (function() {
-	const stats = {
-		moves: 0,
-		misses: 0,
-		doubles: 0,
-		retard: 0,
-	}
+const statsEngine = (function () {
+    const stats = {
+        moves: 0,
+        misses: 0,
+        doubles: 0,
+        retard: 0,
+    }
 
-	return {
-	    pull : () => Object.values(stats),
+    return {
+        pull: () => Object.values(stats),
 
-		update(stat) {
-	        if (!Object.keys(stats).includes(stat))
-				return;
+        update(stat) {
+            if (!Object.keys(stats).includes(stat))
+                return;
 
-			stats[stat]++;
-			document.getElementById(stat).innerHTML = stats[stat];
-		},
+            stats[stat]++;
+            document.getElementById(stat).innerHTML = stats[stat];
+        },
 
-		reset() {
-	        for (let stat in stats) {
-	            stats[stat] = 0;
+        reset() {
+            for (let stat in stats) {
+                stats[stat] = 0;
                 document.getElementById(stat).innerHTML = stats[stat];
             }
-		}
-	}
+        }
+    }
 })();
 
-const timerEngine = (function() {
+const timerEngine = (function () {
     let time = 0;
     let timerID = null;
 
@@ -82,72 +78,45 @@ const timerEngine = (function() {
             return time;
         },
 
-		tick() {
-			time++;
-			if (time % 60 < 10)
-				document.getElementById("timer").innerHTML =
+        tick() {
+            time++;
+            if (time % 60 < 10)
+                document.getElementById("timer").innerHTML =
                     `${Math.floor(time / 60)}:0${time % 60}`;
-			else
-				document.getElementById("timer").innerHTML =
+            else
+                document.getElementById("timer").innerHTML =
                     `${Math.floor(time / 60)}:${time % 60}`;
-		},
+        },
 
-		start() {
-			if (timerID === null)
+        start() {
+            if (!timerID)
                 timerID = setInterval(this.tick.bind(this), 1000);
-			// this.tick without the .bind(this) also works, idk why tho
-		},
+            // this.tick without the .bind(this) also works, idk why tho
+        },
 
-		stop() {
-			if (timerID !== null) {
-				clearInterval(timerID);
-				timerID = null;
-			}
-		},
+        stop() {
+            if (timerID) {
+                clearInterval(timerID);
+                timerID = null;
+            }
+        },
 
-		reset() {
-			this.stop();
-			time = -1;
-			this.tick();
-		}
-	}
+        reset() {
+            this.stop();
+            time = -1;
+            this.tick();
+        }
+    }
 })();
 
-const puzzleEngine = (function() {
+const puzzleEngine = (function () {
     let image = null;
-    let id1 = '';
+    let id1 = null;
     let numColsToCut = 1;
     let numRowsToCut = 1;
     let imagePieces = [];
     let diffs = [];
-
-    const processDiffs = () => {
-        diffs = [];
-        $('#diffSelect').empty();
-
-        const w = image.naturalWidth;
-        const h = image.naturalHeight;
-
-        for (let i = 25; i < w; i++) {
-            if (w % i !== 0)
-                continue;
-
-            for (let j = -1 * Math.floor(i * 0.11); j < i * 0.11; j++) {
-                if (h % (i - j) === 0) {
-                    const puzzleWidth = i, puzzleHeight = i - j;
-                    diffs.push([puzzleWidth, puzzleHeight]);
-                    const option = document.createElement('option');
-                    option.text = `${w / puzzleWidth}x${h / puzzleHeight}(${puzzleWidth}x${puzzleHeight}px)`;
-                    document.getElementById('diffSelect').add(option);
-                }
-            }
-        }
-
-        if (diffs.length === 0)
-            alert('No possible square or almost square difficulties possible. Please choose a picture with a common aspect ratio.');
-        else
-            document.getElementById('loadImageButton').value = 'Loaded!';
-    };
+    let correctCounter = 0;
 
     const removeAll = () => {
         $('#layer1 p').remove();
@@ -160,23 +129,23 @@ const puzzleEngine = (function() {
         $('#puzzlebg img').remove();
     };
 
-    const cutImageUp = (widthOfOnePiece, heightOfOnePiece) => {
+    const cutImageUp = (pieceWidth, pieceHeight) => {
         for (let y = 0; y < numRowsToCut; y++) {
             for (let x = 0; x < numColsToCut; x++) {
                 const canvas = document.createElement('canvas');
-                canvas.width = widthOfOnePiece;
-                canvas.height = heightOfOnePiece;
+                canvas.width = pieceWidth;
+                canvas.height = pieceHeight;
 
                 const context = canvas.getContext('2d');
-                context.drawImage(image, x * widthOfOnePiece, y * heightOfOnePiece,
-                    widthOfOnePiece, heightOfOnePiece, 0, 0, canvas.width, canvas.height);
+                context.drawImage(image, x * pieceWidth, y * pieceHeight,
+                    pieceWidth, pieceHeight, 0, 0, canvas.width, canvas.height);
 
                 imagePieces.push(canvas.toDataURL());
             }
         }
     };
 
-    const fillContainers = (widthOfOnePiece, heightOfOnePiece) => {
+    const fillContainers = (pieceWidth, pieceHeight) => {
         const layer1 = $('#layer1');
         const layer2 = $('#layer2');
         const whitebg = $('#whitebg');
@@ -188,51 +157,53 @@ const puzzleEngine = (function() {
                 whitebg.append('<br>');
             }
 
-            layer1.append(`<img id=${i} src=${imagePieces[i]} draggable="false" alt=""/>`); //add onclick=swap(this.id)
+            layer1.append(`<img id=${i} src=${imagePieces[i]} draggable="false" alt=""/>`); //add onclick=swapPuzzles(this.id)
             document.getElementById(`${i}`).addEventListener('mousedown', () => {
-                swap(event.target.id);
+                swapPuzzles(event.target.id);
             }); //instead of this
 
-            layer2.append(`<img id=${i}_x src=https://i.ibb.co/1ZhYj3v/block.png height=${heightOfOnePiece} width=${widthOfOnePiece} draggable="false" style="opacity:0" alt=""/>`);
-            whitebg.append(`<img id=${i}_bg src=https://i.imgur.com/j2HZfhe.png height=${heightOfOnePiece} width=${widthOfOnePiece} draggable="false" alt=""/>`);
+            layer2.append(`<img id=${i}_x src=https://i.ibb.co/1ZhYj3v/block.png height=${pieceHeight} width=${pieceWidth} draggable="false" style="opacity:0" alt=""/>`);
+            whitebg.append(`<img id=${i}_bg src=https://i.imgur.com/j2HZfhe.png height=${pieceHeight} width=${pieceWidth} draggable="false" alt=""/>`);
         }
     };
 
-    const swap = (id2) => {
+    const swapSources = (id1, id2) => {
+        const temp = document.getElementById(id1).src;
+        document.getElementById(id1).src = document.getElementById(id2).src;
+        document.getElementById(id2).src = temp;
+    }
+
+    const swapPuzzles = (id2) => {
         if (document.getElementById(id2).src === imagePieces[id2]) {
-            soundsEngine.playOofSound();
+            soundsEngine.play("retard");
             statsEngine.update("retard");
-            const id2_x = `${id2}_x`;
-            document.getElementById(id2_x).style.opacity = '1';
+            document.getElementById(`${id2}_x`).style.opacity = '1';
             setTimeout(() => $(`#${id2}_x`).animate({opacity: 0}), 300);
             return;
         }
 
-        soundsEngine.playHitSound();
+        soundsEngine.play("hit");
 
-        if (id1 === '') {
+        if (!id1) {
             document.getElementById(id2).style.opacity = '0.7';
             id1 = id2;
             return;
 
         } else if (id1 !== id2) {
             statsEngine.update("moves");
-            const srcpom = document.getElementById(id1).src;
-            document.getElementById(id1).src = document.getElementById(id2).src;
-            document.getElementById(id2).src = srcpom;
+            swapSources(id1, id2);
 
             const src1 = document.getElementById(id1).src;
             const src2 = document.getElementById(id2).src;
 
             if (src1 === imagePieces[id1] && src2 === imagePieces[id2]) {
-                setTimeout(() => {
-                    soundsEngine.playGoodSound();
-                }, 100);
-                soundsEngine.playGoodSound();
+                correctCounter += 2;
+                soundsEngine.playDouble();
                 statsEngine.update("doubles");
 
             } else if (src1 === imagePieces[id1] || src2 === imagePieces[id2]) {
-                soundsEngine.playGoodSound();
+                correctCounter++;
+                soundsEngine.play("good");
 
             } else {
                 statsEngine.update("misses");
@@ -240,21 +211,22 @@ const puzzleEngine = (function() {
         }
 
         document.getElementById(id1).style.opacity = '1';
-        id1 = '';
+        id1 = null;
 
-        if (allCorrect())
+        if (correctCounter === numColsToCut * numRowsToCut) // puzzle is solved
             setTimeout(alertEndResults, 500);
     };
 
-    const allCorrect = () => {
+    const initiallyCorrectCount = () => {
+        let counter = 0;
+
         for (let i = 0; i < numColsToCut * numRowsToCut; i++) {
-            if (document.getElementById(`${i}`).src !== imagePieces[i])
-                return false;
+            if (document.getElementById(`${i}`).src === imagePieces[i])
+                counter++;
         }
 
-        timerEngine.stop();
-        return true;
-    };
+        return counter;
+    }
 
     const alertEndResults = () => {
         const time = timerEngine.getTime();
@@ -262,62 +234,85 @@ const puzzleEngine = (function() {
         const seconds = time % 60;
         const [moves, misses, doubles, retard] = statsEngine.pull();
 
-        if (seconds < 10)
+        if (seconds < 10) {
             alert(`Well done!
 Time: ${minutes}:0${seconds}
 Moves: ${moves}
 Misses: ${misses}
 Doubles: ${doubles}
 Retard: ${retard}`);
-        else
+        } else {
             alert(`Well done!
 Time: ${minutes}:${seconds}
 Moves: ${moves}
 Misses: ${misses}
 Doubles: ${doubles}
 Retard: ${retard}`);
+        }
     };
 
     return {
         initImage() {
+            if (image) return;
+
             image = new Image();
             image.setAttribute('crossOrigin', 'anonymous');
-            image.src = '';
         },
 
-        setImage(file) {
-            image.onload = () => URL.revokeObjectURL(image.src);
+        loadImage: (file) => new Promise((resolve, reject) => {
+            image.onload = () => {
+                URL.revokeObjectURL(image.src);
+                resolve(image);
+            }
+            image.onerror = () => reject(new Error("error while loading image"));
             image.src = URL.createObjectURL(file);
-        },
+        }),
 
-        loadImage() {
-            if (!image.complete)
-                window.setTimeout(this.loadImage.bind(puzzleEngine), 100);
-            else
-                processDiffs();
+        processDiffs() {
+            diffs = [];
+            $('#diffSelect').empty();
+
+            const {naturalWidth: w, naturalHeight: h} = image;
+
+            for (let i = 25; i < w; i++) {
+                if (w % i !== 0)
+                    continue;
+
+                for (let j = -1 * Math.floor(i * 0.11); j < i * 0.11; j++) {
+                    if (h % (i - j) === 0) {
+                        const pieceWidth = i, pieceHeight = i - j;
+                        diffs.push([pieceWidth, pieceHeight]);
+                        const option = document.createElement('option');
+                        option.text = `${w / pieceWidth}x${h / pieceHeight}(${pieceWidth}x${pieceHeight}px)`;
+                        document.getElementById('diffSelect').add(option);
+                    }
+                }
+            }
+
+            if (diffs.length === 0)
+                alert('No possible square or almost square difficulties possible. ' +
+                    'Please choose a picture with a common aspect ratio.');
         },
 
         generatePuzzles() {
-            if (image.src === '') {
+            if (!image || image.src === '') {
                 alert('Load an image first!');
                 return;
             }
 
-            const containerArray = document.getElementsByClassName('container');
-            const containerSize = containerArray.length;
-            for (let i = 0; i < containerSize; i++)
-                containerArray[i].style.width = `${image.naturalWidth}`;
+            const containersArray = document.getElementsByClassName('container');
+            const containersCount = containersArray.length;
+            for (let i = 0; i < containersCount; i++)
+                containersArray[i].style.width = `${image.naturalWidth}`;
 
-            document.getElementById('loadImageButton').value = 'Load image';
             imagePieces = [];
-            const widthOfOnePiece = diffs[document.getElementById('diffSelect').selectedIndex][0];
-            const heightOfOnePiece = diffs[document.getElementById('diffSelect').selectedIndex][1];
-            numColsToCut = image.naturalWidth / widthOfOnePiece;
-            numRowsToCut = image.naturalHeight / heightOfOnePiece;
+            const [pieceWidth, pieceHeight] = diffs[document.getElementById('diffSelect').selectedIndex];
+            numColsToCut = image.naturalWidth / pieceWidth;
+            numRowsToCut = image.naturalHeight / pieceHeight;
 
-            removeAll(widthOfOnePiece, heightOfOnePiece);
-            cutImageUp(widthOfOnePiece, heightOfOnePiece);
-            fillContainers(widthOfOnePiece, heightOfOnePiece);
+            removeAll();
+            cutImageUp(pieceWidth, pieceHeight);
+            fillContainers(pieceWidth, pieceHeight);
         },
 
         shuffle() {
@@ -326,11 +321,11 @@ Retard: ${retard}`);
 
             for (let i = 0; i < numColsToCut * numRowsToCut; i++) {
                 const x = Math.floor((Math.random() * numColsToCut * numRowsToCut));
-                const srcpom = document.getElementById(`${i}`).src;
-                document.getElementById(`${i}`).src = document.getElementById(`${x}`).src;
-                document.getElementById(`${x}`).src = srcpom;
+                swapSources(`${x}`, `${i}`);
             }
 
+            correctCounter = initiallyCorrectCount();
+            // maybe implement a re-shuffle if too many are correct initially? idk
             timerEngine.reset();
             timerEngine.start();
             statsEngine.reset();
@@ -340,11 +335,12 @@ Retard: ${retard}`);
 
 window.onload = () => {
     puzzleEngine.initImage();
-    soundsEngine.initSounds();
+    soundsEngine.init();
 
     const input = document.getElementById('linkInput');
     input.addEventListener('change', () => {
         if (input.files && input.files[0])
-            puzzleEngine.setImage(input.files[0]);
+            puzzleEngine.loadImage(input.files[0])
+                .then(puzzleEngine.processDiffs, error => alert(error.message));
     });
 }

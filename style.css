@@ -1,20 +1,20 @@
-body{
-	padding: 0; 
+body {
+	padding: 0;
 	margin: 5px;
-	background: linear-gradient(120deg, #a83279, #d38312); 
+	background: linear-gradient(120deg, #a83279, #d38312);
 	background-size: 200%;
 	-webkit-animation: bgAnimated 15s ease infinite;
     -moz-animation: bgAnimated 15s ease infinite;
     -o-animation: bgAnimated 15s ease infinite;
     animation: bgAnimated 15s ease infinite;
 	font-size: 21px;
-	font-family: "Trebuchet MS", Helvetica, sans-serif; 
+	font-family: "Trebuchet MS", Helvetica, sans-serif;
 	font-weight: bold;
 	color: white;
 	-webkit-text-stroke-width: 0;
 	-webkit-text-stroke-color: black;
-	
-} 
+
+}
 @-webkit-keyframes bgAnimated {
     0%{background-position:0 22%}
     50%{background-position:100% 79%}
@@ -35,11 +35,11 @@ body{
     50%{background-position:100% 79%}
     100%{background-position:0 22%}
 }
-canvas{
+canvas {
 	text-align: center;
 	vertical-align: top;
-} 
-#puzzlebg{
+}
+#puzzlebg {
 	z-index: -1;
 	position: absolute;
 	background-image: url(img/bg.png);
@@ -51,39 +51,39 @@ canvas{
 	top: -5px;
 	display: flex;
 }
-#puzzlebg img{
+#puzzlebg img {
 	margin: auto;
 }
-#stats{
+#stats {
 	float: right;
 	text-align: right;
 }
-#stuff{
+#stuff {
 	float: left;
 	display: flex;
 }
-#imageLinkInput{
+#imageLinkInput {
 	min-width: 0;
 	max-width: 250px;
 	flex: 1;
 }
-#buttons{
+#buttons {
 	float: left;
 }
-#whitebg{
-	z-index: 1; 
-	pointer-events: none; 
+#whitebg {
+	z-index: 1;
+	pointer-events: none;
 }
-#layer1{
-	z-index: 2; 
+#layer1 {
+	z-index: 2;
 }
-#layer2{
+#layer2 {
 	z-index: 3;
 	pointer-events: none;
 }
-.container{
+.container {
 	position: absolute;
-	white-space: nowrap; 
+	white-space: nowrap;
 	margin-top: 35px;
 	margin-left: auto;
 	margin-right: auto;
@@ -91,13 +91,17 @@ canvas{
 	right: 0;
 	text-align: center;
 }
-.button{
+.button {
 	width: 33.33%;
 	height: 30px;
-	font-family: "Trebuchet MS", Helvetica, sans-serif; 
+	font-family: "Trebuchet MS", Helvetica, sans-serif;
 	font-size: 18px;
 }
-.ui{
+.button.ninja {
+	opacity: 0;
+	visibility: hidden;
+}
+.ui {
 	height: 30px;
 	vertical-align: middle;
 	line-height: 30px;
