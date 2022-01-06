@@ -1,5 +1,34 @@
 "use strict";
 
+const UIEngine = (function() {
+    let areStatsVisible = true;
+
+    return {
+        uploadImage() {
+            document.getElementById("fileInput").click();
+        },
+
+        showSelectDiff() {
+            if (!puzzleEngine.isImageLoaded()) return;
+            let popup = $(`#diff-select`);
+            popup.css("pointer-events", "all");
+            popup.animate({opacity: 1}, 200);
+        },
+
+        hideSelectDiff() {
+            let popup = $(`#diff-select`);
+            popup.css("pointer-events", "none");
+            popup.animate({opacity: 0}, 200);
+        },
+
+        toggleStats() {
+            let popup = $(`#stats`);
+            popup.animate({opacity: areStatsVisible ? 0 : 1}, 200);
+            areStatsVisible = !areStatsVisible;
+        }
+    }
+})();
+
 const soundsEngine = (function () {
     const sounds = {
         hit: {element: new Audio('sounds/hitsound.wav')},
@@ -81,16 +110,15 @@ const timerEngine = (function () {
         tick() {
             time++;
             if (time % 60 < 10)
-                document.getElementById("timer").innerHTML =
-                    `${Math.floor(time / 60)}:0${time % 60}`;
+                document.getElementById("timer").childNodes[2].textContent =
+                    `Time: ${Math.floor(time / 60)}:0${time % 60}`;
             else
-                document.getElementById("timer").innerHTML =
-                    `${Math.floor(time / 60)}:${time % 60}`;
+                document.getElementById("timer").childNodes[2].textContent =
+                    `Time: ${Math.floor(time / 60)}:${time % 60}`;
         },
 
         start() {
-            if (!timerID)
-                timerID = setInterval(this.tick.bind(this), 1000);
+            if (!timerID) timerID = setInterval(this.tick.bind(this), 1000);
             // this.tick without the .bind(this) also works, idk why tho
         },
 
@@ -112,9 +140,11 @@ const timerEngine = (function () {
 const puzzleEngine = (function () {
     let image = null;
     let id1 = null;
-    let numColsToCut = 1;
-    let numRowsToCut = 1;
     let imagePieces = [];
+    let selectedDiff = {
+        cols: 0,
+        rows: 0,
+    };
     let diffs = [];
     let correctCounter = 0;
 
@@ -130,8 +160,8 @@ const puzzleEngine = (function () {
     };
 
     const cutImageUp = (pieceWidth, pieceHeight) => {
-        for (let y = 0; y < numRowsToCut; y++) {
-            for (let x = 0; x < numColsToCut; x++) {
+        for (let y = 0; y < selectedDiff.rows; y++) {
+            for (let x = 0; x < selectedDiff.cols; x++) {
                 const canvas = document.createElement('canvas');
                 canvas.width = pieceWidth;
                 canvas.height = pieceHeight;
@@ -150,18 +180,14 @@ const puzzleEngine = (function () {
         const layer2 = $('#layer2');
         const whitebg = $('#whitebg');
 
-        for (let i = 0; i < numColsToCut * numRowsToCut; i++) {
-            if (i % numColsToCut === 0 && i !== 0) {
+        for (let i = 0; i < selectedDiff.cols * selectedDiff.rows; i++) {
+            if (i % selectedDiff.cols === 0 && i !== 0) {
                 layer1.append('<br>');
                 layer2.append('<br>');
                 whitebg.append('<br>');
             }
 
-            layer1.append(`<img id=${i} src=${imagePieces[i]} draggable="false" alt=""/>`); //add onclick=swapPuzzles(this.id)
-            document.getElementById(`${i}`).addEventListener('mousedown', () => {
-                swapPuzzles(event.target.id);
-            }); //instead of this
-
+            layer1.append(`<img id=${i} src=${imagePieces[i]} onclick="puzzleEngine.swapPuzzles(this.id)" draggable="false" alt=""/>`);
             layer2.append(`<img id=${i}_x src=https://i.ibb.co/1ZhYj3v/block.png height=${pieceHeight} width=${pieceWidth} draggable="false" style="opacity:0" alt=""/>`);
             whitebg.append(`<img id=${i}_bg src=https://i.imgur.com/j2HZfhe.png height=${pieceHeight} width=${pieceWidth} draggable="false" alt=""/>`);
         }
@@ -173,54 +199,10 @@ const puzzleEngine = (function () {
         document.getElementById(id2).src = temp;
     }
 
-    const swapPuzzles = (id2) => {
-        if (document.getElementById(id2).src === imagePieces[id2]) {
-            soundsEngine.play("retard");
-            statsEngine.update("retard");
-            document.getElementById(`${id2}_x`).style.opacity = '1';
-            setTimeout(() => $(`#${id2}_x`).animate({opacity: 0}), 300);
-            return;
-        }
-
-        soundsEngine.play("hit");
-
-        if (!id1) {
-            document.getElementById(id2).style.opacity = '0.7';
-            id1 = id2;
-            return;
-
-        } else if (id1 !== id2) {
-            statsEngine.update("moves");
-            swapSources(id1, id2);
-
-            const src1 = document.getElementById(id1).src;
-            const src2 = document.getElementById(id2).src;
-
-            if (src1 === imagePieces[id1] && src2 === imagePieces[id2]) {
-                correctCounter += 2;
-                soundsEngine.playDouble();
-                statsEngine.update("doubles");
-
-            } else if (src1 === imagePieces[id1] || src2 === imagePieces[id2]) {
-                correctCounter++;
-                soundsEngine.play("good");
-
-            } else {
-                statsEngine.update("misses");
-            }
-        }
-
-        document.getElementById(id1).style.opacity = '1';
-        id1 = null;
-
-        if (correctCounter === numColsToCut * numRowsToCut) // puzzle is solved
-            setTimeout(alertEndResults, 500);
-    };
-
     const initiallyCorrectCount = () => {
         let counter = 0;
 
-        for (let i = 0; i < numColsToCut * numRowsToCut; i++) {
+        for (let i = 0; i < selectedDiff.cols * selectedDiff.rows; i++) {
             if (document.getElementById(`${i}`).src === imagePieces[i])
                 counter++;
         }
@@ -259,6 +241,10 @@ Retard: ${retard}`);
             image.setAttribute('crossOrigin', 'anonymous');
         },
 
+        isImageLoaded() {
+            return diffs.length;
+        },
+
         loadImage: (file) => new Promise((resolve, reject) => {
             image.onload = () => {
                 URL.revokeObjectURL(image.src);
@@ -268,11 +254,23 @@ Retard: ${retard}`);
             image.src = URL.createObjectURL(file);
         }),
 
+        selectDiff: (clicked_id) => {
+            let diffText = document.getElementById(clicked_id).textContent;
+            let [text1, text2] = diffText.split("x");
+            selectedDiff = {
+                cols: parseInt(text1),
+                rows: parseInt(text2),
+            };
+            UIEngine.hideSelectDiff();
+            puzzleEngine.generatePuzzles();
+        },
+
         processDiffs() {
             diffs = [];
-            $('#diffSelect').empty();
+            const diffSelect = $('#diff-select');
+            diffSelect.empty();
 
-            const {naturalWidth: w, naturalHeight: h} = image;
+            const { naturalWidth: w, naturalHeight: h } = image;
 
             for (let i = 25; i < w; i++) {
                 if (w % i !== 0)
@@ -282,9 +280,9 @@ Retard: ${retard}`);
                     if (h % (i - j) === 0) {
                         const pieceWidth = i, pieceHeight = i - j;
                         diffs.push([pieceWidth, pieceHeight]);
-                        const option = document.createElement('option');
-                        option.text = `${w / pieceWidth}x${h / pieceHeight}(${pieceWidth}x${pieceHeight}px)`;
-                        document.getElementById('diffSelect').add(option);
+
+                        let desc = `${w / pieceWidth}x${h / pieceHeight} (${pieceWidth}x${pieceHeight}px)`;
+                        diffSelect.append(`<a class="diff" id="diff_${diffs.length - 1}" onclick="puzzleEngine.selectDiff(this.id)">${desc}</a>`);
                     }
                 }
             }
@@ -306,9 +304,9 @@ Retard: ${retard}`);
                 containersArray[i].style.width = `${image.naturalWidth}`;
 
             imagePieces = [];
-            const [pieceWidth, pieceHeight] = diffs[document.getElementById('diffSelect').selectedIndex];
-            numColsToCut = image.naturalWidth / pieceWidth;
-            numRowsToCut = image.naturalHeight / pieceHeight;
+
+            let pieceWidth = image.naturalWidth / selectedDiff.cols;
+            let pieceHeight = image.naturalHeight / selectedDiff.rows;
 
             removeAll();
             cutImageUp(pieceWidth, pieceHeight);
@@ -319,8 +317,8 @@ Retard: ${retard}`);
             if (document.getElementById('layer1').innerHTML === '')
                 return;
 
-            for (let i = 0; i < numColsToCut * numRowsToCut; i++) {
-                const x = Math.floor((Math.random() * numColsToCut * numRowsToCut));
+            for (let i = 0; i < selectedDiff.cols * selectedDiff.rows; i++) {
+                const x = Math.floor((Math.random() * selectedDiff.cols * selectedDiff.rows));
                 swapSources(`${x}`, `${i}`);
             }
 
@@ -330,14 +328,62 @@ Retard: ${retard}`);
             timerEngine.start();
             statsEngine.reset();
         },
+
+        swapPuzzles: (id2) => {
+            if (document.getElementById(id2).src === imagePieces[id2]) {
+                soundsEngine.play("retard");
+                statsEngine.update("retard");
+                document.getElementById(`${id2}_x`).style.opacity = '1';
+                setTimeout(() => $(`#${id2}_x`).animate({opacity: 0}), 300);
+                return;
+            }
+
+            soundsEngine.play("hit");
+
+            if (!id1) {
+                document.getElementById(id2).style.opacity = '0.7';
+                id1 = id2;
+                return;
+
+            } else if (id1 !== id2) {
+                statsEngine.update("moves");
+                swapSources(id1, id2);
+
+                const src1 = document.getElementById(id1).src;
+                const src2 = document.getElementById(id2).src;
+
+                if (src1 === imagePieces[id1] && src2 === imagePieces[id2]) {
+                    correctCounter += 2;
+                    soundsEngine.playDouble();
+                    statsEngine.update("doubles");
+
+                } else if (src1 === imagePieces[id1] || src2 === imagePieces[id2]) {
+                    correctCounter++;
+                    soundsEngine.play("good");
+
+                } else {
+                    statsEngine.update("misses");
+                }
+            }
+
+            document.getElementById(id1).style.opacity = '1';
+            id1 = null;
+
+            if (correctCounter === selectedDiff.cols * selectedDiff.rows) { // puzzle is solved
+                timerEngine.stop();
+                setTimeout(alertEndResults, 500);
+            }
+        },
     }
 })();
+
+window.onbeforeunload = () => "Are you sure you want to close the window?";
 
 window.onload = () => {
     puzzleEngine.initImage();
     soundsEngine.init();
 
-    const input = document.getElementById('linkInput');
+    const input = document.getElementById('fileInput');
     input.addEventListener('change', () => {
         if (input.files && input.files[0])
             puzzleEngine.loadImage(input.files[0])
