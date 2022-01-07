@@ -1,12 +1,6 @@
 body {
 	padding: 0;
 	margin: 0;
-	background: linear-gradient(120deg, #a83279, #d38312);
-	background-size: 200%;
-	-webkit-animation: bgAnimated 15s ease infinite;
-    -moz-animation: bgAnimated 15s ease infinite;
-    -o-animation: bgAnimated 15s ease infinite;
-    animation: bgAnimated 15s ease infinite;
 	font-size: 21px;
 	font-family: "Trebuchet MS", Helvetica, sans-serif;
 	font-weight: bold;
@@ -38,9 +32,23 @@ canvas {
 	text-align: center;
 	vertical-align: top;
 }
+#bg {
+	z-index: -2;
+	position: fixed;
+	background: linear-gradient(120deg, #a83279, #d38312);
+	background-size: 200%;
+	-webkit-animation: bgAnimated 15s ease infinite;
+	-moz-animation: bgAnimated 15s ease infinite;
+	-o-animation: bgAnimated 15s ease infinite;
+	animation: bgAnimated 15s ease infinite;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+}
 #puzzlebg {
 	z-index: -1;
-	position: absolute;
+	position: fixed;
 	background-image: url(img/bg.png);
 	background-repeat: repeat;
 	background-size: 800px;
@@ -54,29 +62,43 @@ canvas {
 	margin: auto;
 }
 #stats {
+	z-index: 100;
+	position: fixed;
 	background-color: #151515;
 	border-bottom-left-radius: 10px;
 	padding: 10px;
 	width: 120px;
 	line-height: 30px;
-	float: right;
+	right: 0;
 	display: flex;
 	flex-direction: column;
 }
-.stat {
-	clear: both;
-	overflow: auto;
+#results-popup {
+	background-color: #151515;
+	border-radius: 10px;
+	box-shadow: 0 0 20px white;
+	z-index: 100;
+	position: fixed;
+	opacity: 0;
+	line-height: 30px;
+	display: flex;
+	flex-direction: column;
+	padding: 40px;
+	top: 50%;
+	left: 50%;
+	margin-left: -140px;
+	margin-top: -130px;
+	min-width: 200px;
+	min-height: 180px;
+	max-width: 200px;
+	max-height: 200px;
+	/* center this div differently */
 }
 .pull-left {
 	float: left;
 }
 .pull-right {
 	float: right;
-}
-#imageLinkInput {
-	min-width: 0;
-	max-width: 250px;
-	flex: 1;
 }
 #whitebg {
 	z-index: 1;
@@ -93,7 +115,6 @@ canvas {
 	font-size: 0;
 	position: absolute;
 	white-space: nowrap;
-	margin-top: 35px;
 	margin-left: auto;
 	margin-right: auto;
 	left: 70px;
@@ -102,12 +123,11 @@ canvas {
 }
 #diff-select {
 	z-index: 100;
-	position: absolute;
+	position: fixed;
 	padding: 0;
-	top: 50%;
+	top: 0;
 	left: 50%;
 	margin-left: -200px;
-	margin-top: -100px;
 	min-width: 400px;
 	min-height: 200px;
 	border-radius: 10px;
@@ -140,7 +160,6 @@ canvas {
 	border-bottom-right-radius: 10px;
 	overflow: hidden;
 	white-space: nowrap;
-	/* box-shadow: 0 0 20px #000000; */
 	transition: .3s ease;
 }
 .sidebar-item {
