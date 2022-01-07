@@ -231,8 +231,20 @@ const puzzleEngine = (function () {
         [ pieces[id1].src, pieces[id2].src ] = [ pieces[id2].src, pieces[id1].src ];
     };
 
-    const initiallyCorrectCount = () =>
-        pieces.reduce((count, piece, i) => piece.src === initialSrcs[i] ? count + 1 : count, 0);
+    const initiallyCorrectCount = () => {
+        let count = 0;
+
+        for (let i = 0; i < selectedDiff.cols * selectedDiff.rows; i++) {
+            if (pieces[i].src === initialSrcs[i])
+                count++;
+        }
+
+        return count;
+
+        // could flex by doing
+        // return pieces.reduce((count, piece, i) => piece.src === initialSrcs[i] ? count + 1 : count, 0);
+        // but i aint no flexer
+    }
 
     return {
         initImage() {
@@ -303,7 +315,7 @@ const puzzleEngine = (function () {
             for (let cont of containers)
                 cont.style.width = `${image.naturalWidth}`;
 
-            initialSrcs = [];
+            initialSrcs = pieces = [];
 
             removeAll();
             cutImageUp();
