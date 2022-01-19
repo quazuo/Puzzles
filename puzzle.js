@@ -315,7 +315,8 @@ const puzzleEngine = (function () {
             for (let cont of containers)
                 cont.style.width = `${image.naturalWidth}`;
 
-            initialSrcs = pieces = [];
+            initialSrcs = [];
+            pieces = [];
 
             removeAll();
             cutImageUp();
@@ -323,6 +324,8 @@ const puzzleEngine = (function () {
         },
 
         shuffle() {
+            console.log(pieces[15]);
+
             if (document.getElementById('layer1').innerHTML === '')
                 return;
 
@@ -336,6 +339,8 @@ const puzzleEngine = (function () {
         },
 
         swapPuzzles: (id2) => {
+            id2 = parseInt(id2);
+
             if (pieces[id2].src === initialSrcs[id2]) {
                 soundsEngine.play("retard");
                 statsEngine.update("retard");
